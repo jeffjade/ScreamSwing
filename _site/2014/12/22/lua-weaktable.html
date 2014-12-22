@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>呐喊彷徨</title>
+
+    <link rel="stylesheet" href="/ScreamSwing/stylesheets/styles.css">
+    <link rel="stylesheet" href="/ScreamSwing/stylesheets/pygment_trac.css">
+    <script src="/ScreamSwing/javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+      <h1><a href="http://jeffjade.github.io/ScreamSwing/"><center>呐喊彷徨</center></a></h1>
+        <p><h3>勤學如春起之苗，不見其增，日有所長。綴學如磨刀之石，不見其損，日有所虧。</h3></p>
+        <p class="view"><a href="https://github.com/jeffjade/ScreamSwing">View the Project on GitHub <small>jeffjade/ScreamSwing</small></a></p>
+        <ul>
+          <li><a href="https://github.com/jeffjade/ScreamSwing/tree/gh-pages">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a> Lua table之弱引用 
+        </h1>
+<p>Lua采用了基于垃圾收集的内存管理机制，因此对于程序员来说，在很多时候内存问题都将不再困扰他们。然而任何垃圾收集器都不是万能的，在有些特殊情况下，垃圾收集器是无法准确的判断是否应该将当前对象清理。这样就极有可能导致很多垃圾对象无法被释放。为了解决这一问题，就需要Lua的开发者予以一定程度上的配合。比如，当某个table对象被存放在容器中，而容器的外部不再有任何变量引用该对象，对于这样的对象，Lua的垃圾收集器是不会清理的，因为容器对象仍然引用着他。如果此时针对该容器的应用仅限于查找，而不是遍历的话，那么该对象将永远不会被用到。事实上，对于这样的对象我们是希望Lua的垃圾收集器可以将其清理掉的。见如下代码:</p>
+<div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="n">a</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">key</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">a</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">key</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">a</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="nb">collectgarbage</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">do</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="k">end</span>    
+</code></pre></div>
+<p>--输出1和2</p>
+
+<p>在执行垃圾收集之后，table a中的两个key都无法被清理，但是对value等于1的key而言，如果后面的逻辑不会遍历table a的话，那么我们就可以认为该对象内存泄露了。在Lua中提供了一种被称为弱引用table的机制，可以提示垃圾收集器，如果某个对象，如上面代码中的第一个table key，只是被弱引用table引用，那么在执行垃圾收集时可以将其清理。</p>
+
+<p><font color="red">Lua中的弱引用表提供了3中弱引用模式，即key是弱引用、value是弱引用，以及key和value均是弱引用。不论是哪种类型的弱引用table，只要有一个key或value被回收，那么它们所在的整个条目都会从table中删除。</font></p>
+
+<p>一个table的弱引用类型是通过其元表的__mode字段来决定的。如果该值为包含字符&quot;k&quot;，那么table就是key弱引用，如果包含&quot;v&quot;，则是value若引用，如果两个字符均存在，就是key/value弱引用。见如下代码：</p>
+<div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="n">a</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="n">__mode</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">k&quot;</span><span class="p">}</span>
+<span class="nb">setmetatable</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+<span class="n">key</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">a</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">key</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">a</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="nb">collectgarbage</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">do</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>--仅仅输出2</p>
+
+<p>在上面的代码示例中，第一个key在被存放到table a之后，就被第二个key的定义所覆盖，因此它的唯一引用来自key弱引用表。事实上，这种机制在Java中也同样存在，Java在1.5之后的版本中也提供了一组弱引用容器，其语义和Lua的弱引用table相似。
+<font color="blue">最后需要说明的是，Lua中的弱引用表只是作用于table类型的变量，对于其他类型的变量，如数值和字符串等，弱引用表并不起任何作用。</font></p>
+
+<h2>备忘录(memoize)函数：</h2>
+
+<p>用“空间换时间”是一种通用的程序运行效率优化手段，比如：对于一个普通的Server，它接受到的请求中包含Lua代码，每当其收到请求后都会调用Lua的loadstring函数来动态解析请求中的Lua代码，如果这种操作过于频率，就会导致Server的执行效率下降。要解决该问题，我们可以将每次解析的结果缓存到一个table中，下次如果接收到相同的Lua代码，就不需要调用loadstirng来动态解析了，而是直接从table中获取解析后的函数直接执行即可。这样在有大量重复Lua代码的情况下，可以极大的提高Server的执行效率。反之，如果有相当一部分的Lua代码只是出现一次，那么再使用这种机制，就将会导致大量的内存资源被占用而得不到有效的释放。在这种情况下，如果使用弱引用表，不仅可以在一定程度上提升程序的运行效率，内存资源也会得到有效的释放。见如下代码：</p>
+<div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="kd">local</span> <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="nb">setmetatable</span><span class="p">(</span><span class="n">results</span><span class="p">,{</span><span class="n">__mode</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">v&quot;</span><span class="p">})</span> <span class="c1">--results表中的key是字符串形式的Lua代码</span>
+<span class="k">function</span> <span class="nf">mem_loadstring</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">res</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="kc">nil</span> <span class="k">then</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">assert</span><span class="p">(</span><span class="nb">loadstring</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span>
+    <span class="k">end</span>
+    <span class="k">return</span> <span class="n">res</span>
+<span class="k">end</span>
+</code></pre></div>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/jeffjade">jeffjade</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>

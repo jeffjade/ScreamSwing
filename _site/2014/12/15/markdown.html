@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>呐喊彷徨</title>
+
+    <link rel="stylesheet" href="/ScreamSwing/stylesheets/styles.css">
+    <link rel="stylesheet" href="/ScreamSwing/stylesheets/pygment_trac.css">
+    <script src="/ScreamSwing/javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+      <h1><a href="http://jeffjade.github.io/ScreamSwing/"><center>呐喊彷徨</center></a></h1>
+        <p><h3>勤學如春起之苗，不見其增，日有所長。綴學如磨刀之石，不見其損，日有所虧。</h3></p>
+        <p class="view"><a href="https://github.com/jeffjade/ScreamSwing">View the Project on GitHub <small>jeffjade/ScreamSwing</small></a></p>
+        <ul>
+          <li><a href="https://github.com/jeffjade/ScreamSwing/tree/gh-pages">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a> sublime text下的Markdown写作 
+        </h1>
+<h1><font color='purple'>sublime text 2(3)下的Markdown写作</font></h1>
+
+<hr>
+
+<h2>什么是 Markdown <a href="http://zh.wikipedia.org/wiki/Markdown">wiki</a></h2>
+
+<p>Markdown 是一种方便记忆、书写的纯文本标记语言，用户可以使用这些标记符号以最小的输入代价生成极富表现力的文档：譬如您正在阅读的这份文档。它使用简单的符号标记不同的标题，分割不同的段落，<strong>粗体</strong> 或者 <em>斜体</em> 某些文字 还可以<font color='blue'>颜色变换</font> 等等;</p>
+
+<p>您可以使用 Cmd Markdown：</p>
+
+<blockquote>
+<ul>
+<li>整理知识，学习笔 记</li>
+<li>发布日记，杂文，所见所想</li>
+<li>撰写发布技术文稿（代码支持）</li>
+<li>撰写发布学术论文（LaTeX 公式支持）</li>
+</ul>
+</blockquote>
+
+<p>作为Windows/Mac/Linux下强大的文本编辑器，st提供了对Markdown语言的支持。通过设置可实现 markdown 预览和转换功能。
+而本文介绍的Markdown Preview支持Mathjax语法和目录自动生成。(Windows下)</p>
+
+<h2>安装Package Control</h2>
+
+<hr>
+
+<p>安装包控制扩展可以方便地为st添加拓展。
+打开st，按下组合键Control + <code>，出现控制台，输入
+</code><code>python
+import urllib2,os; pf=&#39;Package Control.sublime-package&#39;; ipp = sublime.installed_packages_path(); os.makedirs( ipp ) if not os.path.exists(ipp) else None; urllib2.install_opener( urllib2.build_opener( urllib2.ProxyHandler( ))); open( os.path.join( ipp, pf), &#39;wb&#39; ).write( urllib2.urlopen( &#39;http://sublime.wbond.net/&#39; +pf.replace( &#39; &#39;,&#39;%20&#39; )).read()); print( &#39;Please restart Sublime Text to finish installation&#39;)
+</code>`
+当看到代码最后一行提示的时候说明安装成功，此时重启st，可在Preferences -&gt; Package Settings看到Package Control。</p>
+
+<h2>安装markdown preview</h2>
+
+<hr>
+
+<p>按下键Ctrl+Shift+p调出命令面板，找到Package Control: install Pakage这一项。搜索markdown preview，点击安装。</p>
+
+<h2>关于编辑</h2>
+
+<p>按Ctrl + N 新建一个文档
+按Ctrl + Shift + P
+使用Markdown语法编辑文档
+语法高亮，输入ssm 后回车(Set Syntax: Markdown)</p>
+
+<h2>关于使用</h2>
+
+<hr>
+
+<p>Markdown Preview较常用的功能是preview in browser和Export HTML in Sublime Text，前者可以在浏览器看到预览效果，后者可将markdown保存为html文件。
+preview inbrowser据称是实时的，但是实践上还是需要在st保存，然后浏览器刷新才能看到新的效果，
+好在markdown写得多的话也不需要每敲一行看一次效果。</p>
+
+<h2>在浏览器预览Markdown文档</h2>
+
+<hr>
+
+<p>按Ctrl + Shift + P
+输入mp 后回车(Markdown Preview: current file in browser)
+此时就可以在浏览器里看到刚才编辑的文档了;
+若设置了快捷键,直接(alt+m/..)即可.</p>
+
+<h2>关于快捷键</h2>
+
+<hr>
+
+<p>st支持自定义快捷键，markdown preview默认没有快捷键，我们可以自己为preview in browser设置快捷键。
+方法是在Preferences -&gt; Key Bindings User打开的文件的中括号中添加以下代码(可在Key Bindings Default找到格式)：
+    { &quot;keys&quot;: [&quot;alt+m&quot;], &quot;command&quot;: &quot;markdown_preview&quot;, &quot;args&quot;: { &quot;target&quot;: &quot;browser&quot;} }
+&quot;alt+m&quot;可设置为您自己喜欢的按键。
+    如果你这里没有看到目录而只是看到代码，说明简书不支持目录自动生成...</p>
+
+<h2>打印成pdf</h2>
+
+<hr>
+
+<p>将markdown转换为pdf应该有很多种方法的。可直接用谷歌浏览器虚拟打印功能生成。
+利用Markdown Preview的Preview in Browser功能可以在浏览器上看到html效果。在页面右键-&gt;打印-&gt;另存为pdf-&gt;调节页边距即可将pdf文件下载下来。</p>
+
+<p>参考链接：
+<a href="http://www.cnblogs.com/heidsoft/p/3896855.html">1 使用Sublime Text 2 编辑Markdown</a>
+<a href="http://www.jianshu.com/p/378338f10263">2 sublime text 2 下的Markdown写作</a>
+<a href="http://www.cnblogs.com/dezheng/p/3834813.html">3 Markdown入门基础</a></p>
+
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/jeffjade">jeffjade</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>

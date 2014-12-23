@@ -5,8 +5,8 @@
     <description></description>
     <link>/ScreamSwing</link>
     <atom:link href="/ScreamSwingfeed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Tue, 23 Dec 2014 21:39:31 +0800</pubDate>
-    <lastBuildDate>Tue, 23 Dec 2014 21:39:31 +0800</lastBuildDate>
+    <pubDate>Tue, 23 Dec 2014 22:26:51 +0800</pubDate>
+    <lastBuildDate>Tue, 23 Dec 2014 22:26:51 +0800</lastBuildDate>
     <generator>Jekyll v2.5.2</generator>
     
       <item>
@@ -375,6 +375,64 @@ preview inbrowser据称是实时的，但是实践上还是需要在st保存，�
         <pubDate>Mon, 15 Dec 2014 00:00:00 +0800</pubDate>
         <link>/2014/12/15/markdown.html</link>
         <guid isPermaLink="true">/ScreamSwing/2014/12/15/markdown.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>基于GitHub Pages搭建的Blog</title>
+        <description>&lt;h3&gt;The ScreamSwing Blog Come From &lt;a href=&quot;http://minixalpha.github.io/StrayBirds/&quot;&gt;StrayBirds&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;==========&lt;/p&gt;
+
+&lt;p&gt;基于 GitHub Pages 搭建的极简博客，所有操作都可以直接通过浏览器完成。&lt;/p&gt;
+
+&lt;h2&gt;示例&lt;/h2&gt;
+
+&lt;p&gt;可以通过访问 &lt;a href=&quot;http://minixalpha.github.io/StrayBirds/&quot;&gt;StrayBirds&lt;/a&gt; 看到最终
+的效果，下面是截图:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://jeffjade.github.io/ScreamSwing/images/ui_demo.png&quot; alt=&quot;ui-demo&quot;&gt;&lt;/p&gt;
+
+&lt;h2&gt;教程&lt;/h2&gt;
+
+&lt;h3&gt;使用方法&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;注册 GitHub，得到用户名，例如 minixbeta&lt;/li&gt;
+&lt;li&gt;到 &lt;a href=&quot;https://github.com/minixalpha/StrayBirds&quot;&gt;StrayBirds&lt;/a&gt; 页面，单击右上
+角的 Fork&lt;/li&gt;
+&lt;li&gt;到你 Fork 后的项目中，将 &lt;code&gt;_config.yml&lt;/code&gt; 中的 username 修改为你的用户名 minixbeta&lt;/li&gt;
+&lt;li&gt;访问你的博客 http://minixbeta.github.io/StrayBirds/&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://jeffjade.github.io/ScreamSwing/images/create_project.gif&quot; alt=&quot;create_project&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;如果你想修改项目的名字，例如将 StrayBirds 修改为 blog，那么你需要做的是&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;在项目的 Setting 中将 Repository name 从 StrayBirds 修改为 blog&lt;/li&gt;
+&lt;li&gt;将 &lt;code&gt;_config.yml&lt;/code&gt; 中的 baseurl 修改为 /blog&lt;/li&gt;
+&lt;li&gt;通过 http://minixbeta.github.io/blog/ 来访问你的新博客&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://jeffjade.github.io/ScreamSwing/images/change_project_name.gif&quot; alt=&quot;create_post&quot;&gt;&lt;/p&gt;
+
+&lt;h3&gt;添加文章&lt;/h3&gt;
+
+&lt;p&gt;在 &lt;code&gt;_post&lt;/code&gt; 目录下添加形如 &lt;code&gt;2014-10-26-title.md&lt;/code&gt; 的文章，用 markdown 格式
+撰写博客。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://jeffjade.github.io/ScreamSwing/images/create_post.gif&quot; alt=&quot;create_post&quot;&gt;&lt;/p&gt;
+
+&lt;h2&gt;感谢&lt;/h2&gt;
+
+&lt;p&gt;博客主题来自 &lt;a href=&quot;https://github.com/orderedlist/modernist&quot;&gt;modernist&lt;/a&gt;, 
+开源协议为 &lt;a href=&quot;http://creativecommons.org/licenses/by-sa/3.0/&quot;&gt;Creative Commons Attribution-ShareAlike 3.0 Unported License&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Mon, 15 Dec 2014 00:00:00 +0800</pubDate>
+        <link>/2014/12/15/make-githubblg.html</link>
+        <guid isPermaLink="true">/ScreamSwing/2014/12/15/make-githubblg.html</guid>
         
         
       </item>

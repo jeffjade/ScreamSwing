@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>呐喊彷徨</title>
+    <description></description>
+    <link>/ScreamSwing</link>
+    <atom:link href="/ScreamSwingfeed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Tue, 23 Dec 2014 21:39:31 +0800</pubDate>
+    <lastBuildDate>Tue, 23 Dec 2014 21:39:31 +0800</lastBuildDate>
+    <generator>Jekyll v2.5.2</generator>
+    
+      <item>
+        <title>Lua table之弱引用</title>
+        <description>&lt;p&gt;Lua采用了基于垃圾收集的内存管理机制，因此对于程序员来说，在很多时候内存问题都将不再困扰他们。然而任何垃圾收集器都不是万能的，在有些特殊情况下，垃圾收集器是无法准确的判断是否应该将当前对象清理。这样就极有可能导致很多垃圾对象无法被释放。为了解决这一问题，就需要Lua的开发者予以一定程度上的配合。比如，当某个table对象被存放在容器中，而容器的外部不再有任何变量引用该对象，对于这样的对象，Lua的垃圾收集器是不会清理的，因为容器对象仍然引用着他。如果此时针对该容器的应用仅限于查找，而不是遍历的话，那么该对象将永远不会被用到。事实上，对于这样的对象我们是希望Lua的垃圾收集器可以将其清理掉的。见如下代码:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-lua&quot; data-lang=&quot;lua&quot;&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;collectgarbage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;pairs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;    
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;--输出1和2&lt;/p&gt;
+
+&lt;p&gt;在执行垃圾收集之后，table a中的两个key都无法被清理，但是对value等于1的key而言，如果后面的逻辑不会遍历table a的话，那么我们就可以认为该对象内存泄露了。在Lua中提供了一种被称为弱引用table的机制，可以提示垃圾收集器，如果某个对象，如上面代码中的第一个table key，只是被弱引用table引用，那么在执行垃圾收集时可以将其清理。&lt;/p&gt;
+
+&lt;p&gt;&lt;font color=&quot;red&quot;&gt;Lua中的弱引用表提供了3中弱引用模式，即key是弱引用、value是弱引用，以及key和value均是弱引用。不论是哪种类型的弱引用table，只要有一个key或value被回收，那么它们所在的整个条目都会从table中删除。&lt;/font&gt;&lt;/p&gt;
+
+&lt;p&gt;一个table的弱引用类型是通过其元表的__mode字段来决定的。如果该值为包含字符&amp;quot;k&amp;quot;，那么table就是key弱引用，如果包含&amp;quot;v&amp;quot;，则是value若引用，如果两个字符均存在，就是key/value弱引用。见如下代码：&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-lua&quot; data-lang=&quot;lua&quot;&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;k&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;setmetatable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;collectgarbage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;k&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;pairs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;--仅仅输出2&lt;/p&gt;
+
+&lt;p&gt;在上面的代码示例中，第一个key在被存放到table a之后，就被第二个key的定义所覆盖，因此它的唯一引用来自key弱引用表。事实上，这种机制在Java中也同样存在，Java在1.5之后的版本中也提供了一组弱引用容器，其语义和Lua的弱引用table相似。
+&lt;font color=&quot;blue&quot;&gt;最后需要说明的是，Lua中的弱引用表只是作用于table类型的变量，对于其他类型的变量，如数值和字符串等，弱引用表并不起任何作用。&lt;/font&gt;&lt;/p&gt;
+
+&lt;h2&gt;备忘录(memoize)函数：&lt;/h2&gt;
+
+&lt;p&gt;用“空间换时间”是一种通用的程序运行效率优化手段，比如：对于一个普通的Server，它接受到的请求中包含Lua代码，每当其收到请求后都会调用Lua的loadstring函数来动态解析请求中的Lua代码，如果这种操作过于频率，就会导致Server的执行效率下降。要解决该问题，我们可以将每次解析的结果缓存到一个table中，下次如果接收到相同的Lua代码，就不需要调用loadstirng来动态解析了，而是直接从table中获取解析后的函数直接执行即可。这样在有大量重复Lua代码的情况下，可以极大的提高Server的执行效率。反之，如果有相当一部分的Lua代码只是出现一次，那么再使用这种机制，就将会导致大量的内存资源被占用而得不到有效的释放。在这种情况下，如果使用弱引用表，不仅可以在一定程度上提升程序的运行效率，内存资源也会得到有效的释放。见如下代码：&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-lua&quot; data-lang=&quot;lua&quot;&gt;&lt;span class=&quot;kd&quot;&gt;local&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;setmetatable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__mode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;v&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;--results表中的key是字符串形式的Lua代码&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mem_loadstring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;local&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;res&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;res&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;res&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;loadstring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;res&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;res&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        <pubDate>Mon, 22 Dec 2014 00:00:00 +0800</pubDate>
+        <link>/2014/12/22/lua-weaktable.html</link>
+        <guid isPermaLink="true">/ScreamSwing/2014/12/22/lua-weaktable.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Git常用命令备忘</title>
+        <description>&lt;h2&gt;Git配置&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git config --global user.name &amp;quot;robbin&amp;quot;   
+git config --global user.email &amp;quot;fankai@gmail.com&amp;quot;
+git config --global color.ui true
+git config --global alias.co checkout
+git config --global alias.ci commit
+git config --global alias.st status
+git config --global alias.br branch
+git config --global core.editor &amp;quot;mate -w&amp;quot;    # 设置Editor使用textmate
+git config -l  # 列举所有配置
+用户的git配置文件~/.gitconfig
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;Git常用命令:查看、添加、提交、删除、找回，重置修改文件&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git help &amp;lt;command&amp;gt;  # 显示command的help
+git show            # 显示某次提交的内容
+git show $id
+
+git co  -- &amp;lt;file&amp;gt;   # 抛弃工作区修改
+git co  .           # 抛弃工作区修改
+
+git add &amp;lt;file&amp;gt;      # 将工作文件修改提交到本地暂存区
+git add .           # 将所有修改过的工作文件提交暂存区
+
+git rm &amp;lt;file&amp;gt;       # 从版本库中删除文件
+git rm &amp;lt;file&amp;gt; --cached  # 从版本库中删除文件，但不删除文件
+
+git reset &amp;lt;file&amp;gt;    # 从暂存区恢复到工作文件
+git reset -- .      # 从暂存区恢复到工作文件
+git reset --hard    # 恢复最近一次提交过的状态，即放弃上次提交后的所有本次修改
+
+git ci &amp;lt;file&amp;gt;       
+git ci .
+git ci -a           # 将git add, git rm和git ci等操作都合并在一起做
+git ci -am &amp;quot;some comments&amp;quot;
+git ci --amend      # 修改最后一次提交记录
+git commit --amend  #修改最后一次提交注释的，利用–amend参数  
+
+git revert &amp;lt;$id&amp;gt;    # 恢复某次提交的状态，恢复动作本身也创建了一次提交对象
+git revert HEAD     # 恢复最后一次提交的状态
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;查看文件diff&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git diff &amp;lt;file&amp;gt;     # 比较当前文件和暂存区文件差异
+git diff
+git diff &amp;lt;$id1&amp;gt; &amp;lt;$id2&amp;gt;   # 比较两次提交之间的差异
+git diff &amp;lt;branch1&amp;gt;..&amp;lt;branch2&amp;gt; # 在两个分支之间比较 
+git diff --staged   # 比较暂存区和版本库差异
+git diff --cached   # 比较暂存区和版本库差异
+git diff --stat     # 仅仅比较统计信息
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;查看提交记录&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git log
+git log &amp;lt;file&amp;gt;      # 查看该文件每次提交记录
+git log -p &amp;lt;file&amp;gt;   # 查看每次详细修改内容的diff
+git log -p -2       # 查看最近两次详细修改内容的diff
+git log --stat      # 查看提交统计信息
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;tig&lt;/h2&gt;
+
+&lt;p&gt;Mac上可以使用tig代替diff和log，brew install tig&lt;/p&gt;
+
+&lt;h2&gt;Git 本地分支管理查看、切换、创建和删除分支&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git br -r           # 查看远程分支
+git br &amp;lt;new_branch&amp;gt; # 创建新的分支
+git br -v           # 查看各个分支最后提交信息
+git br --merged     # 查看已经被合并到当前分支的分支
+git br --no-merged  # 查看尚未被合并到当前分支的分支
+
+git co &amp;lt;branch&amp;gt;     # 切换到某个分支
+git co -b &amp;lt;new_branch&amp;gt; # 创建新的分支，并且切换过去
+git co -b &amp;lt;new_branch&amp;gt; &amp;lt;branch&amp;gt;  # 基于branch创建新的new_branch
+
+git co $id          # 把某次历史提交记录checkout出来，但无分支信息，切换到其他分支会自动删除
+git co $id -b &amp;lt;new_branch&amp;gt;  # 把某次历史提交记录checkout出来，创建成一个分支
+
+git br -d &amp;lt;branch&amp;gt;  # 删除某个分支
+git br -D &amp;lt;branch&amp;gt;  # 强制删除某个分支 (未被合并的分支被删除的时候需要强制)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;分支合并和rebase&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git merge &amp;lt;branch&amp;gt;               # 将branch分支合并到当前分支
+git merge origin/master --no-ff  # 不要Fast-Foward合并，这样可以生成merge提交
+
+git rebase master &amp;lt;branch&amp;gt;       # 将master rebase到branch，相当于：
+git co &amp;lt;branch&amp;gt; &amp;amp;&amp;amp; git rebase master &amp;amp;&amp;amp; git co master &amp;amp;&amp;amp; git merge &amp;lt;branch&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;Git补丁管理(方便在多台机器上开发同步时用)&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git diff &amp;gt; ../sync.patch         # 生成补丁
+git apply ../sync.patch          # 打补丁
+git apply --check ../sync.patch  # 测试补丁能否成功
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;Git暂存管理&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git stash                        # 暂存
+git stash list                   # 列所有stash
+git stash apply                  # 恢复暂存的内容
+git stash drop                   # 删除暂存区
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;Git远程分支管理&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git pull                         # 抓取远程仓库所有分支更新并合并到本地
+git pull --no-ff                 # 抓取远程仓库所有分支更新并合并到本地，不要快进合并
+git fetch origin                 # 抓取远程仓库更新
+git merge origin/master          # 将远程主分支合并到本地当前分支
+git co --track origin/branch     # 跟踪某个远程分支创建相应的本地分支
+git co -b &amp;lt;local_branch&amp;gt; origin/&amp;lt;remote_branch&amp;gt;  # 基于远程分支创建本地分支，功能同上
+
+git push                         # push所有分支
+git push origin master           # 将本地主分支推到远程主分支
+git push -u origin master        # 将本地主分支推到远程(如无远程主分支则创建，用于初始化远程仓库)
+git push origin &amp;lt;local_branch&amp;gt;   # 创建远程分支， origin是远程仓库名
+git push origin &amp;lt;local_branch&amp;gt;:&amp;lt;remote_branch&amp;gt;  # 创建远程分支
+git push origin :&amp;lt;remote_branch&amp;gt;  #先删除本地分支(git br -d &amp;lt;branch&amp;gt;)，然后再push删除远程分支
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;Git远程仓库管理&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git remote -v                    # 查看远程服务器地址和仓库名称
+git remote show origin           # 查看远程服务器仓库状态
+git remote add origin git@github:robbin/robbin_site.git         # 添加远程仓库地址
+git remote set-url origin git@github.com:robbin/robbin_site.git # 设置远程仓库地址(用于修改远程仓库地址)
+git remote rm &amp;lt;repository&amp;gt;       # 删除远程仓库
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;创建远程仓库&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git clone --bare robbin_site robbin_site.git  # 用带版本的项目创建纯版本仓库
+scp -r my_project.git git@git.csdn.net:~      # 将纯仓库上传到服务器上
+
+mkdir robbin_site.git &amp;amp;&amp;amp; cd robbin_site.git &amp;amp;&amp;amp; git --bare init # 在服务器创建纯仓库
+git remote add origin git@github.com:robbin/robbin_site.git    # 设置远程仓库地址
+git push -u origin master                                      # 客户端首次提交
+git push -u origin develop    # 首次将本地develop分支提交到远程develop分支，并且track
+
+git remote set-head origin master   # 设置远程仓库的HEAD指向master分支
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;也可以命令设置跟踪远程库和本地库&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;git branch --set-upstream master origin/master
+git branch --set-upstream develop origin/develop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;http://robbinfan.com/blog/34/git-common-command&quot;&gt;原文参考链接HERE&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Mon, 22 Dec 2014 00:00:00 +0800</pubDate>
+        <link>/2014/12/22/gitmemo.html</link>
+        <guid isPermaLink="true">/ScreamSwing/2014/12/22/gitmemo.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>小团队的技术管理</title>
+        <description>&lt;h2&gt;&lt;a href=&quot;http://news.cnblogs.com/n/511425/&quot;&gt;原文链接&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;　　最近一年左右兼职技术管理的经验试总结，核心理念就是以人为本。&lt;/p&gt;
+
+&lt;h2&gt;小作坊&lt;/h2&gt;
+
+&lt;p&gt;　　小项目的构成往往是一个相对有经验的人作为 leader，带几个毕业生构成一个三五个人的小作坊。没有达到配置专门的项目管理人员的程度，因此管人管事管技术，三权集中在一个人身上。&lt;/p&gt;
+
+&lt;p&gt;　　对效率上有好的和坏的影响，但也是不错的选择，开发人员一般是比较难管理的，职业的项目经理很难做好这个事情。&lt;/p&gt;
+
+&lt;p&gt;　　这也从一定程度上让这个 leader 的精力极大分散，很难做较多的 coding 工作，分散在项目管理，对外对内协调，以及人才培养，质量控制等工作。耗散精力，同时也对能力有较大的锻炼，提高了独立生存能力。&lt;/p&gt;
+
+&lt;h2&gt;年龄特点&lt;/h2&gt;
+
+&lt;p&gt;　　之前有专门讨论过，由于婴儿潮的原因，90后人逐渐开始变少，同时由于没有经历过童年的物质匮乏和最近几十年中国经济的快速发展，这代人相对80后更崇尚自由，会少一些牺牲，多一些自我实现，也因此相对更难于管理。&lt;/p&gt;
+
+&lt;p&gt;　　这代人的成长环境也确实优越一些，接触电脑早，教育资源优质，也少走了不少弯路。相比之下，同样是工作两年，明显新生代比曾经的我有诸多优势。当然，这也是相对的。&lt;/p&gt;
+
+&lt;h2&gt;无为&lt;/h2&gt;
+
+&lt;p&gt;　　无为不是什么都不做，而是让无来为，事情本身有自己内在的规律，把一群优秀的人放在一起自然就能做好事情，这种协作的能力是天赋的。无为是尊重客观规律，不做不必要的干涉，在宏观上把控，抓大放小，用养的心态，往往能释放应有的创造力，得到高质量的产出。大部分的控制都是弄巧成拙。&lt;font color=&#39;purple&#39;&gt;这一点作为90后，亦是相当的认同。当然，对于作者后面讲到的无为所致使缺陷，也是不做反驳。毕竟是人，每个人都有其特点;而且，从于何人，事于何地，也需另当别论的。&lt;/font&gt;&lt;/p&gt;
+
+&lt;h2&gt;以人为本&lt;/h2&gt;
+
+&lt;p&gt;　　工作为了什么，首先是钱，然后是成长，再然后是实现理想。&lt;/p&gt;
+
+&lt;p&gt;　　培养和保持一个精英团队，对技术有卓越的追求，互相认可彼此的技术水平，这样的环境在国内是十分稀少的，自然会在一定程度上珍惜。&lt;/p&gt;
+
+&lt;p&gt;　　独立承担更多的责任，而不是把底层自己实现掉，剩余 ui 层来做。对管理者来说，大部分的模块已经没有什么挑战了，应该放手放权让组员独立承担，对自己精力是一个解放，可以锻炼了组员独立解决问题的能力。如果每个人都能做到自我管理独当一面，就有机会变得轻松了。寻找一些有技术深度的点出来，把部分预研工作交出去。独立面对产品和 ui，节省自我的精力，也对组员有好处。&lt;/p&gt;
+
+&lt;p&gt;　　抓大放下，不深入细节，过多的控制有副作用，细节的争论消耗精力，又因为组员把全部精力投入到一个点上，因此也很难占到便宜。&lt;/p&gt;
+
+&lt;p&gt;　　保持coding，要有自己的核心技术，否则，很快就会受到挑战。管理者有点像是坦克和治疗的责任，来保证 dps 全力输出。&lt;/p&gt;
+
+&lt;p&gt;　　我推崇流程尽可能的弱，因为几乎每个流程都有副作用。deadline 会影响质量，refine 然后就不被鼓励，指标越精细越抑制创造力的发挥。如果大家都是 kpi 导向，就没办法做到卓越，真正的卓越从每个人的自我实现中涌现出来。&lt;/p&gt;
+
+&lt;p&gt;　　真诚沟通，不是从公司的角度，而是从对方的角度，究竟我认为怎么做是对的。在一个公司待的时间毕竟有限，三五年可能就不在了，一个互联网公司的寿命本身就短。技术也一样，很快就过时。作为个人和团队，应当如何共同应对这些挑战。&lt;/p&gt;
+
+&lt;p&gt;　　程序员把代码看做自己的孩子，因此要尊重组员的代码，这样他们才能用最大的爱心和热心来维护这部分。 曾经我让G同学改了H同学的部分代码来实现一个需求优化，后面有问题找H同学，感觉他的意思就是，代码被G改乱了，他不想管了。这也说明了，保持所有组员的高水准的必要性。之前我也接手过一些代码的维护工作，坏味道非常重，非重写不可。持续产出低质量代码的人，应该从编码工作中脱离出来，或者隔离到一个不被任何人依赖的地方。&lt;font color=&quot;purple&quot;&gt;此一段 每一观皆讲到我的心坎里&lt;/font&gt;&lt;/p&gt;
+
+&lt;h2&gt;无为的缺点&lt;/h2&gt;
+
+&lt;p&gt;　　无为执行起来实际上非常的困难，也有一些不利的方面。类似民主，能释放创造力，有时又效率地下。无为相信人，但人终究有时不可靠的，这就导致有可能出现有人吃大锅饭，或者自我管理能力不强失控的情况出现。&lt;/p&gt;
+
+&lt;p&gt;　　具体表现在时间和进度上容易失控，如何及时发现和化解这种风险，而不是视而不见。因此需要一个清晰的项目计划和任务估计，一方面及时发现风险，一方面也是对时间管理能力的锻炼，这一点很重要。&lt;/p&gt;
+
+&lt;p&gt;　　人治有好处也有缺点，容易形成军阀割据的情况，因此聪明的管理者会引入法制来进行约束，法制把人拉回平等的水平，一定程度上也是必要的。 也就是，以德治国是不够的，还需要依法治国。&lt;/p&gt;
+
+&lt;p&gt;　　在中国很难有纯技术的环境，不得不在一定程度上 kpi 导向，国内的各种创新院研究院，都没有好下场。因此，要保持平衡。&lt;/p&gt;
+
+&lt;h2&gt;权力的味道&lt;/h2&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;“如果你们告诉我的有关他们的事是真的，那么我只能说，他们还没有尝到真正的权力的味道。” -宋美龄&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;　　权力是个好东西，但不能迷恋。有舍才有得。想拥有就会恐惧，就会耗费精力，而实际上拥有与否并非是个人意志所控制的，不如随缘。&lt;/p&gt;
+
+&lt;p&gt;　　物竞天择，换个角度，天竞物择，没有要为了一个具体的事情改变自己。同时又要像水一样，不守一个固定的形态。&lt;/p&gt;
+
+&lt;h2&gt;讽刺&lt;/h2&gt;
+
+&lt;p&gt;　　我曾经有过一个神级的 leader，可惜当时太年轻，选择去挑战而不是学习，错过了不少机会，回想起来十分后悔。如今我也在经历类似的事情，很具讽刺意味。每个人都有缺点，正确的做法是扬长避短，而不是挑刺，所谓三人行必有我师，也只有走过弯路才会懂得。&lt;/p&gt;
+
+&lt;h2&gt;　　我们都还在成长的路上。&lt;/h2&gt;
+</description>
+        <pubDate>Wed, 17 Dec 2014 00:00:00 +0800</pubDate>
+        <link>/2014/12/17/manage-technique.html</link>
+        <guid isPermaLink="true">/ScreamSwing/2014/12/17/manage-technique.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>sublime text下的Markdown写作</title>
+        <description>&lt;h1&gt;&lt;font color=&#39;purple&#39;&gt;sublime text 2(3)下的Markdown写作&lt;/font&gt;&lt;/h1&gt;
+
+&lt;hr&gt;
+
+&lt;h2&gt;什么是 Markdown &lt;a href=&quot;http://zh.wikipedia.org/wiki/Markdown&quot;&gt;wiki&lt;/a&gt;&lt;/h2&gt;
+
+&lt;p&gt;Markdown 是一种方便记忆、书写的纯文本标记语言，用户可以使用这些标记符号以最小的输入代价生成极富表现力的文档：譬如您正在阅读的这份文档。它使用简单的符号标记不同的标题，分割不同的段落，&lt;strong&gt;粗体&lt;/strong&gt; 或者 &lt;em&gt;斜体&lt;/em&gt; 某些文字 还可以&lt;font color=&#39;blue&#39;&gt;颜色变换&lt;/font&gt; 等等;&lt;/p&gt;
+
+&lt;p&gt;您可以使用 Cmd Markdown：&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;整理知识，学习笔 记&lt;/li&gt;
+&lt;li&gt;发布日记，杂文，所见所想&lt;/li&gt;
+&lt;li&gt;撰写发布技术文稿（代码支持）&lt;/li&gt;
+&lt;li&gt;撰写发布学术论文（LaTeX 公式支持）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;作为Windows/Mac/Linux下强大的文本编辑器，st提供了对Markdown语言的支持。通过设置可实现 markdown 预览和转换功能。
+而本文介绍的Markdown Preview支持Mathjax语法和目录自动生成。(Windows下)&lt;/p&gt;
+
+&lt;h2&gt;安装Package Control&lt;/h2&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;安装包控制扩展可以方便地为st添加拓展。
+打开st，按下组合键Control + &lt;code&gt;，出现控制台，输入
+&lt;/code&gt;&lt;code&gt;python
+import urllib2,os; pf=&amp;#39;Package Control.sublime-package&amp;#39;; ipp = sublime.installed_packages_path(); os.makedirs( ipp ) if not os.path.exists(ipp) else None; urllib2.install_opener( urllib2.build_opener( urllib2.ProxyHandler( ))); open( os.path.join( ipp, pf), &amp;#39;wb&amp;#39; ).write( urllib2.urlopen( &amp;#39;http://sublime.wbond.net/&amp;#39; +pf.replace( &amp;#39; &amp;#39;,&amp;#39;%20&amp;#39; )).read()); print( &amp;#39;Please restart Sublime Text to finish installation&amp;#39;)
+&lt;/code&gt;`
+当看到代码最后一行提示的时候说明安装成功，此时重启st，可在Preferences -&amp;gt; Package Settings看到Package Control。&lt;/p&gt;
+
+&lt;h2&gt;安装markdown preview&lt;/h2&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;按下键Ctrl+Shift+p调出命令面板，找到Package Control: install Pakage这一项。搜索markdown preview，点击安装。&lt;/p&gt;
+
+&lt;h2&gt;关于编辑&lt;/h2&gt;
+
+&lt;p&gt;按Ctrl + N 新建一个文档
+按Ctrl + Shift + P
+使用Markdown语法编辑文档
+语法高亮，输入ssm 后回车(Set Syntax: Markdown)&lt;/p&gt;
+
+&lt;h2&gt;关于使用&lt;/h2&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;Markdown Preview较常用的功能是preview in browser和Export HTML in Sublime Text，前者可以在浏览器看到预览效果，后者可将markdown保存为html文件。
+preview inbrowser据称是实时的，但是实践上还是需要在st保存，然后浏览器刷新才能看到新的效果，
+好在markdown写得多的话也不需要每敲一行看一次效果。&lt;/p&gt;
+
+&lt;h2&gt;在浏览器预览Markdown文档&lt;/h2&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;按Ctrl + Shift + P
+输入mp 后回车(Markdown Preview: current file in browser)
+此时就可以在浏览器里看到刚才编辑的文档了;
+若设置了快捷键,直接(alt+m/..)即可.&lt;/p&gt;
+
+&lt;h2&gt;关于快捷键&lt;/h2&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;st支持自定义快捷键，markdown preview默认没有快捷键，我们可以自己为preview in browser设置快捷键。
+方法是在Preferences -&amp;gt; Key Bindings User打开的文件的中括号中添加以下代码(可在Key Bindings Default找到格式)：
+    { &amp;quot;keys&amp;quot;: [&amp;quot;alt+m&amp;quot;], &amp;quot;command&amp;quot;: &amp;quot;markdown_preview&amp;quot;, &amp;quot;args&amp;quot;: { &amp;quot;target&amp;quot;: &amp;quot;browser&amp;quot;} }
+&amp;quot;alt+m&amp;quot;可设置为您自己喜欢的按键。
+    如果你这里没有看到目录而只是看到代码，说明简书不支持目录自动生成...&lt;/p&gt;
+
+&lt;h2&gt;打印成pdf&lt;/h2&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;将markdown转换为pdf应该有很多种方法的。可直接用谷歌浏览器虚拟打印功能生成。
+利用Markdown Preview的Preview in Browser功能可以在浏览器上看到html效果。在页面右键-&amp;gt;打印-&amp;gt;另存为pdf-&amp;gt;调节页边距即可将pdf文件下载下来。&lt;/p&gt;
+
+&lt;p&gt;参考链接：
+&lt;a href=&quot;http://www.cnblogs.com/heidsoft/p/3896855.html&quot;&gt;1 使用Sublime Text 2 编辑Markdown&lt;/a&gt;
+&lt;a href=&quot;http://www.jianshu.com/p/378338f10263&quot;&gt;2 sublime text 2 下的Markdown写作&lt;/a&gt;
+&lt;a href=&quot;http://www.cnblogs.com/dezheng/p/3834813.html&quot;&gt;3 Markdown入门基础&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Mon, 15 Dec 2014 00:00:00 +0800</pubDate>
+        <link>/2014/12/15/markdown.html</link>
+        <guid isPermaLink="true">/ScreamSwing/2014/12/15/markdown.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Java 中的并发</title>
+        <description>&lt;h2&gt;如何创建一个线程&lt;/h2&gt;
+
+&lt;p&gt;按 Java 语言规范中的说法，创建线程只有一种方式，就是创建一个 Thread 对象。而从 HotSpot 虚拟机的角度看，创建一个虚拟机线程
+有两种方式，一种是创建 Thread 对象，另一种是创建 一个本地线程，加入到虚拟机线程中。&lt;/p&gt;
+
+&lt;p&gt;如果从 Java 语法的角度。有两种方法。&lt;/p&gt;
+
+&lt;p&gt;第一是继承 Thread 类，实现 run 方法，并创建子类对象。&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;startThreadUseSubClass&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyThread&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Thread&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;start thread using Subclass of Thread&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;MyThread&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;thread&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyThread&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;thread&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;另一种是传递给 Thread 构造函数一个 Runnable 对象。&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;startThreadUseRunnalbe&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;Thread&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;thread&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Runnable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;start thread using runnable&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;});&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;thread&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;当然， Runnalbe 对象，也不是只有这一种形式，例如如果我们想要线程执行时返回一个值，就需要用到另一种 Runnalbe 对象，它
+对原来的 Runnalbe 对象进行了包装。&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;startFutureTask&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;FutureTask&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FutureTask&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Callable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;});&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Thread&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;try&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;task&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;System&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;out&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;future result &amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InterruptedException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;printStackTrace&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;catch&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecutionException&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;printStackTrace&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;结束线程&lt;/h2&gt;
+
+&lt;h2&gt;wait 与 sleep&lt;/h2&gt;
+
+&lt;p&gt;sleep 会使得当前线程休眠一段时间，但并不会释放已经得到的锁。&lt;/p&gt;
+
+&lt;p&gt;wait 会阻塞住，并释放已经得到的锁。一直到有人调用 notify 或者 notifyAll，它会重新尝试得到锁，然后再唤醒。&lt;/p&gt;
+
+&lt;h2&gt;线程池&lt;/h2&gt;
+
+&lt;h3&gt;好处&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;复用&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;线程池中有一系列线程，这些线程在执行完任务后，并不会被销毁，而会从任务队列中取出任务，执行这些任务。这样，就避免为每个任务
+都创建线程，销毁线程。 在有大量短命线程的场景下，如果创建线程和销毁线程的时间比线程执行任务的时间还长，显然是不划算的，这时候，使用线程池就会有明显
+的好处。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;流控&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;同时，可以设置线程数目，这样，线程不会增大到影响系统整体性能的程度。当任务太多时，可以在队列中排队，
+如果有空闲线程，他们会从队列中取出任务执行。&lt;/p&gt;
+
+&lt;h3&gt;使用&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;线程数目&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;那么，线程的数目要设置成多少呢？这需要根据任务类型的不同来设置，假如是大量计算型的任务，他们不会阻塞，那么可以将线程数目设置
+为处理器数目。而如果任务中涉及大量IO，有些线程会阻塞住，这样就要根据阻塞线程数目与运行线程数目的比例，以及处理器数目来设置
+线程总数目。例如阻塞线程数目与运行线程数目之比为n, 处理器数目为p，那么可以设置 n * (p + 1) 个线程，保证有 n 个线程处于运行
+状态。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Executors&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;JDK 的 java.util.concurrent.Executors 类提供了几个静态的方法，用于创建不同类型的线程池。&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;&lt;span class=&quot;n&quot;&gt;ExecutorService&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;service&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Executors&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;newFixedThreadPool&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;ArrayList&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Future&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ArrayList&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;gt;();&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;14&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;++)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Future&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;service&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;submit&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Callable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Integer&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Random&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;nextInt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;});&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;add&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;newFixedThreadPool&lt;/code&gt; 可以创建固定数目的线程，一旦创建不会自动销毁线程，即便长期没有任务。除非显式关闭线程池。如果任务队列中有任务，就取出任务执行。&lt;/p&gt;
+
+&lt;p&gt;另外，还可以使用 &lt;code&gt;newCachedThreadPool&lt;/code&gt; 方法创建一个不设定固定线程数目的线程池，它有一个特性，线程完成任务后，如果一分钟之内又有新任务，就会复用这个线程执行新任务。如果超过一分钟还没有任务执行，就会自动销毁。&lt;/p&gt;
+
+&lt;p&gt;另外，还提供了 &lt;code&gt;newSingleThreadExecutor&lt;/code&gt; 创建有一个工作线程的线程池。&lt;/p&gt;
+
+&lt;h3&gt;原理&lt;/h3&gt;
+
+&lt;p&gt;JDK 中的线程池通过 HashSet 存储工作者线程，通过 BlockingQueue 来存储待处理任务。&lt;/p&gt;
+
+&lt;p&gt;通过核心工作者数目(corePoolSize) 和 最大工作者数目(maximumPoolSize) 来确定如何处理任务。如果当前工作者线程数目
+小于核心工作者数目，则创建一个工作者线程执行这个任务。否则，将这个任务放入待处理队列。如果入队失败，再看看当前工作
+者数目是不是小于最大工作者数目，如果小于，则创建工作者线程执行这个任务。否则，拒绝执行这个任务。&lt;/p&gt;
+
+&lt;p&gt;另外，如果待处理队列中没有任务要处理，并且工作者线程数目超过了核心工作者数目，那么，需要减少工作者线程数目。&lt;/p&gt;
+</description>
+        <pubDate>Sat, 20 Sep 2014 00:00:00 +0800</pubDate>
+        <link>/2014/09/20/java-concurrency.html</link>
+        <guid isPermaLink="true">/ScreamSwing/2014/09/20/java-concurrency.html</guid>
+        
+        
+      </item>
+    
+  </channel>
+</rss>

@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: black_white
 title: Lua table之弱引用
 ---
 

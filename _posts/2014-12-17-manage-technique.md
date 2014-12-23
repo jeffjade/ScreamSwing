@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: black_white
 title: 小团队的技术管理
 ---
 

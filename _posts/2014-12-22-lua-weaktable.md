@@ -21,9 +21,46 @@ end
 
 在执行垃圾收集之后，table a中的两个key都无法被清理，但是对value等于1的key而言，如果后面的逻辑不会遍历table a的话，那么我们就可以认为该对象内存泄露了。在Lua中提供了一种被称为弱引用table的机制，可以提示垃圾收集器，如果某个对象，如上面代码中的第一个table key，只是被弱引用table引用，那么在执行垃圾收集时可以将其清理。
 
+
+Lua是具备自动内存管理的,我们可以只管创建对象，无须删除对象(当然，对于不要的对象你需要设置一下nil值)，Lua会自动删除那些被认为是垃圾的对象。
+问题就出现在，什么对象才是垃圾对象，有些时候，我们很清楚某个对象是垃圾，但是，Lua却无法发现。正如上面所述，就需要Lua的开发者予以一定程度上的配合;再比如下面这个例子:
+
+```lua
+t = {};
+   
+-- 使用一个table作为t的key值
+key1 = {name = "key1"};
+t[key1] = 1;
+key1 = nil;
+
+-- 又使用一个table作为t的key值
+key2 = {name = "key2"};
+t[key2] = 1;
+key2 = nil;
+
+-- 强制进行一次垃圾收集
+collectgarbage();
+
+for key, value in pairs(t) do
+    print(key.name .. ":" .. value);
+end
+```
+
+-- 其结果输出是：  
+>key1:1   
+>key2:1
+
+这很符合常理，也在我们的预计当中，虽然我们在给t赋值之后，将key1和key2都赋值为nil了。
+但是，因为存在table对key1,key2的引用，已经添加到table中的key值是不会因此而被当做垃圾的。
+换句话说，key1本身已经是nil值，但它曾经所指向的`内容`依然存放在t中。key2也是一样的情况。
+所以我们最后还是能输出key1和key2的name字段。
+
+那么，如果我们把某个table作为另一个table的key值后，希望当table设为nil值时，另一个table的那一条字段也被删除。
+应该如何实现？这时候就要用到弱引用table了，弱引用table的实现也是利用了元表。
+
 <font color="red">Lua中的弱引用表提供了3中弱引用模式，即key是弱引用、value是弱引用，以及key和value均是弱引用。不论是哪种类型的弱引用table，只要有一个key或value被回收，那么它们所在的整个条目都会从table中删除。</font>
 
-一个table的弱引用类型是通过其元表的__mode字段来决定的。如果该值为包含字符"k"，那么table就是key弱引用，如果包含"v"，则是value若引用，如果两个字符均存在，就是key/value弱引用。见如下代码：
+一个table的弱引用类型是通过其元表的__mode字段来决定的。如果该值为包含字符"k"，那么table就是key弱引用，如果包含"v"，则是value若引用，如果两个字符均存在，就是key value弱引用。见如下代码：
 
 ```lua
 a = {}

@@ -21,7 +21,7 @@ print(c1())
 
 
 ```lua
--- Desc : 序列化Lua表 
+-- Desc : 序列化Lua表(Convert Lua-Table To String)
 function serialize(t)
 	local mark={}
 	local assign={}

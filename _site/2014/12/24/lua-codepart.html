@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!--black_white.html-->
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    
+    <meta name="description" content="">
+    <title> Lua代码片段收集 › 呐喊彷徨</title>
+    <link rel="canonical" href="/2014/12/24/lua-codepart.html">
+    <link rel="stylesheet" type="text/css" href="/ScreamSwing/basic.css">
+    <link rel="stylesheet" type="text/css" href="/ScreamSwing/highlight.css">
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,200italic,300italic,400italic,600italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Gentium+Basic:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link rel="alternate" type="application/rss+xml" title="呐喊彷徨 &raquo; Feed" href="/ScreamSwing/feed.xml">
+    
+    
+  </head>
+  <body>
+    <header>
+      <h1><a href="/ScreamSwing"><center>呐喊彷徨</center></a></h1>
+      <nav>
+        <ul>
+          <li><a href="http://www.cnblogs.com/jadeboy/">Home</a></li>
+          
+          <li><a href="/ScreamSwing/archiv.html">
+          	Archive</a></li>
+          <li><a href="/ScreamSwing/index.html">
+          	Article</a></li>
+        </ul>
+      </nav>
+    </header>
+<div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="cm">--[[@Func :闭包</span>
+<span class="cm">    @Desc : 当一个函数内部嵌套另一个函数定义时，内部的函数体可以访问外部的函数的局部变量，这种特征我们称作词法定界]]</span>
+<span class="k">function</span> <span class="nf">fuck</span><span class="p">()</span>
+    <span class="kd">local</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="k">function</span><span class="p">()</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">i</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">c1</span> <span class="o">=</span> <span class="n">fuck</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">c1</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">c1</span><span class="p">())</span>
+</code></pre></div><div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="c1">-- Desc : 序列化Lua表 </span>
+<span class="k">function</span> <span class="nf">serialize</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">mark</span><span class="o">=</span><span class="p">{}</span>
+    <span class="kd">local</span> <span class="n">assign</span><span class="o">=</span><span class="p">{}</span>
+
+    <span class="kd">local</span> <span class="k">function</span> <span class="nf">ser_table</span><span class="p">(</span><span class="n">tbl</span><span class="p">,</span><span class="n">parent</span><span class="p">)</span>
+        <span class="n">mark</span><span class="p">[</span><span class="n">tbl</span><span class="p">]</span><span class="o">=</span><span class="n">parent</span>
+        <span class="kd">local</span> <span class="n">tmp</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">tbl</span><span class="p">)</span> <span class="k">do</span>
+            <span class="kd">local</span> <span class="n">key</span><span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">number&quot;</span> <span class="ow">and</span> <span class="s2">&quot;</span><span class="s">[&quot;</span><span class="o">..</span><span class="n">k</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">]&quot;</span> <span class="ow">or</span> <span class="n">k</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">table&quot;</span> <span class="k">then</span>
+                <span class="kd">local</span> <span class="n">dotkey</span><span class="o">=</span> <span class="n">parent</span><span class="o">..</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">number&quot;</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="s">.&quot;</span><span class="o">..</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mark</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">then</span>
+                    <span class="nb">table.insert</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span><span class="n">dotkey</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">=&quot;</span><span class="o">..</span><span class="n">mark</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+                <span class="k">else</span>
+                    <span class="nb">table.insert</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">key</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">=&quot;</span><span class="o">..</span><span class="n">ser_table</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">dotkey</span><span class="p">))</span>
+                <span class="k">end</span>
+            <span class="k">else</span>
+                <span class="nb">table.insert</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">key</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">=&quot;</span><span class="o">..</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">end</span>
+        <span class="k">end</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="s">{&quot;</span><span class="o">..</span><span class="nb">table.concat</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">,&quot;</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">}&quot;</span>
+    <span class="k">end</span>
+
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="s">do local ret=&quot;</span><span class="o">..</span><span class="n">ser_table</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">ret&quot;</span><span class="p">)</span><span class="o">..</span><span class="nb">table.concat</span><span class="p">(</span><span class="n">assign</span><span class="p">,</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> return ret end&quot;</span>
+<span class="k">end</span>
+</code></pre></div><div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="c1">-- 实现Java字符串的Hash算法</span>
+<span class="n">hash</span> <span class="o">=</span> <span class="k">function</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+    <span class="n">input</span> <span class="o">=</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
+    <span class="kd">local</span> <span class="n">h</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="kd">local</span> <span class="n">len</span> <span class="o">=</span> <span class="nb">string.len</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">max</span> <span class="o">=</span> <span class="mi">2147483647</span>
+    <span class="kd">local</span> <span class="n">min</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2147483648</span>
+    <span class="kd">local</span> <span class="n">cycle</span> <span class="o">=</span> <span class="mi">4294967296</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">len</span> <span class="k">do</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">*</span> <span class="n">h</span> <span class="o">+</span> <span class="nb">string.byte</span><span class="p">(</span><span class="nb">string.sub</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">));</span>
+        <span class="k">while</span> <span class="n">h</span> <span class="o">&gt;</span> <span class="n">max</span> <span class="k">do</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">h</span> <span class="o">-</span> <span class="n">cycle</span>
+        <span class="k">end</span>
+        <span class="k">while</span> <span class="n">h</span> <span class="o">&lt;</span> <span class="n">min</span> <span class="k">do</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">h</span> <span class="o">+</span> <span class="n">cycle</span>
+        <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="k">return</span> <span class="n">h</span>
+<span class="k">end</span>
+</code></pre></div><div class="highlight"><pre><code class="language-lua" data-lang="lua"><span class="c1">--Desc : coroutine实现异步通信-取代callback</span>
+<span class="k">function</span> <span class="nf">runAsyncFunc</span><span class="p">(</span> <span class="n">func</span><span class="p">,</span> <span class="o">...</span> <span class="p">)</span>
+    <span class="kd">local</span> <span class="n">current</span> <span class="o">=</span> <span class="nb">coroutine.running</span>
+    <span class="n">func</span><span class="p">(</span><span class="k">function</span> <span class="p">(</span>  <span class="p">)</span>
+        <span class="nb">coroutine.resume</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+    <span class="k">end</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="nb">coroutine.yield</span><span class="p">()</span>
+<span class="k">end</span>
+
+<span class="c1">-- test it as follows:[实现A-B-C严格依次Call]</span>
+<span class="n">jeffValue</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">O&quot;</span>
+<span class="k">function</span> <span class="nf">funcA</span><span class="p">()</span>
+    <span class="n">jeffValue</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">A&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">jeffValue</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">funcB</span><span class="p">()</span>
+    <span class="kd">local</span> <span class="n">n</span> <span class="p">,</span> <span class="n">s</span> <span class="p">,</span> <span class="n">s0</span> <span class="o">=</span> <span class="mi">0</span> 
+
+    <span class="c1">-- delay 3 second execute</span>
+    <span class="kd">local</span> <span class="n">start</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">start second is &quot;</span> <span class="o">..</span> <span class="nb">os.date</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">%S&quot;</span> <span class="p">,</span> <span class="nb">os.time</span><span class="p">()))</span>
+    <span class="k">while</span> <span class="kc">true</span> <span class="k">do</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">os.date</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">%S&quot;</span> <span class="p">,</span> <span class="nb">os.time</span><span class="p">());</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">now</span> <span class="o">-</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">then</span>
+            <span class="n">jeffValue</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">B&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">jeffValue</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">now second is &quot;</span> <span class="o">..</span> <span class="nb">os.date</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">%S&quot;</span> <span class="p">,</span> <span class="nb">os.time</span><span class="p">()))</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">end</span><span class="p">;</span>
+    <span class="k">end</span><span class="p">;</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">funcC</span><span class="p">()</span>
+    <span class="n">jeffValue</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">C&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">jeffValue</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="n">co</span> <span class="o">=</span> <span class="nb">coroutine.create</span><span class="p">(</span><span class="k">function</span> <span class="p">(</span>  <span class="p">)</span>
+    <span class="n">funcA</span><span class="p">()</span>
+    <span class="n">funcB</span><span class="p">()</span>
+    <span class="n">funcC</span><span class="p">()</span>
+<span class="k">end</span><span class="p">)</span>
+
+<span class="nb">coroutine.resume</span><span class="p">(</span><span class="n">co</span><span class="p">)</span>
+<span class="nb">coroutine.resume</span><span class="p">(</span><span class="n">co</span><span class="p">)</span>
+<span class="nb">coroutine.resume</span><span class="p">(</span><span class="n">co</span><span class="p">)</span>
+
+<span class="c1">-- execute test code输出如下:</span>
+<span class="n">A</span>  
+<span class="n">start</span> <span class="n">second</span> <span class="n">is</span> <span class="mi">55</span>  
+<span class="n">B</span>  
+<span class="n">now</span> <span class="n">second</span> <span class="n">is</span> <span class="mi">58</span>   
+<span class="n">C</span>   
+</code></pre></div>
+    <footer>
+      <span>Copyright</span><span><a href="">呐喊彷徨</a></span><span>2014</span>
+    </footer>
+  </body>
+</html>

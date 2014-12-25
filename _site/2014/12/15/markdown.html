@@ -57,11 +57,14 @@
 <hr>
 
 <p>安装包控制扩展可以方便地为st添加拓展。
-打开st，按下组合键Control + <code>，出现控制台，输入
-</code><code>python
-import urllib2,os; pf=&#39;Package Control.sublime-package&#39;; ipp = sublime.installed_packages_path(); os.makedirs( ipp ) if not os.path.exists(ipp) else None; urllib2.install_opener( urllib2.build_opener( urllib2.ProxyHandler( ))); open( os.path.join( ipp, pf), &#39;wb&#39; ).write( urllib2.urlopen( &#39;http://sublime.wbond.net/&#39; +pf.replace( &#39; &#39;,&#39;%20&#39; )).read()); print( &#39;Please restart Sublime Text to finish installation&#39;)
-</code>`
-当看到代码最后一行提示的时候说明安装成功，此时重启st，可在Preferences -&gt; Package Settings看到Package Control。</p>
+打开st，按下组合键Control + `，出现控制台，输入</p>
+<div class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="nn">urllib2</span><span class="o">,</span><span class="nn">os</span><span class="p">;</span> <span class="n">pf</span><span class="o">=</span><span class="s">&#39;Package Control.sublime-package&#39;</span><span class="p">;</span> 
+<span class="n">ipp</span> <span class="o">=</span> <span class="n">sublime</span><span class="o">.</span><span class="n">installed_packages_path</span><span class="p">();</span> <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span> <span class="n">ipp</span> <span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ipp</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span><span class="p">;</span> 
+<span class="n">urllib2</span><span class="o">.</span><span class="n">install_opener</span><span class="p">(</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">build_opener</span><span class="p">(</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">ProxyHandler</span><span class="p">(</span> <span class="p">)));</span> 
+<span class="nb">open</span><span class="p">(</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">ipp</span><span class="p">,</span> <span class="n">pf</span><span class="p">),</span> <span class="s">&#39;wb&#39;</span> <span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span> <span class="s">&#39;http://sublime.wbond.net/&#39;</span> <span class="o">+</span><span class="n">pf</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span> <span class="s">&#39; &#39;</span><span class="p">,</span><span class="s">&#39;%20&#39;</span> <span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">());</span>
+<span class="k">print</span><span class="p">(</span> <span class="s">&#39;Please restart Sublime Text to finish installation&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p>当看到代码最后一行提示的时候说明安装成功，此时重启st，可在Preferences -&gt; Package Settings看到Package Control。</p>
 
 <h2>安装markdown preview</h2>
 

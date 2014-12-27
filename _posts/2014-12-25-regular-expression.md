@@ -627,3 +627,4 @@ String[] directories = filePath.split(Pattern.quote(sep));
 
 ##练习
 选择正则表达式的某种实现，阅读相关文档。我保证，你会学到更多。
+[原文链接地址](http://blog.jobbole.com/63398/)

@@ -30,7 +30,7 @@
       <h1><a href="{{ site.baseurl }}"><center>{{ site.title }}</center></a></h1>
       <nav>
         <ul>
-          <li><a href="http://www.cnblogs.com/jadeboy/">Home</a></li>
+          <li><a href="http://www.cnblogs.com/jadeboy/">Archiv</a></li>
           {% for node in site.pages %}{% if node.title %}
           <li><a href="{{ node.url | prepend: site.baseurl }}"{% if page.url == node.url %} id="selected"{% endif %}>
           	{{ node.title }}</a></li>{% endif %}{% endfor %}

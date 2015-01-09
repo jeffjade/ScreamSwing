@@ -24,12 +24,15 @@
     </script>
     {% endif %}
     {% if site.isso_domain and page.id %}<script data-isso="http://{{ site.isso_domain }}" src="//{{ site.isso_domain }}/js/embed.min.js"></script>{% endif %}
-    <embed src="http://www.xiami.com/widget/0_2049067/singlePlayer.swf" type="application/x-shockwave-flash" width="257" height="33" wmode="transparent"></embed>
   </head>
+
   <body>
     <header>
       <h2><a href="{{ site.baseurl }}"><center>{{ site.title }}</center></a></h2>
-      <p><h4><center>勤學如春起之苗，不見其增，日有所長。綴學如磨刀之石，不見其損，日有所虧。</center></h4></p>
+      <div align="center">
+        <p><h4><center>勤學如春起之苗，不見其增，日有所長。</center></h4></p>
+        <embed src="http://www.xiami.com/widget/0_2049067/singlePlayer.swf" type="application/x-    shockwave-flash" autostart="true" loop="true" quality="high" width="257" height="33" wmode="transparent"></embed>
+      </div>
       <hr color="purple"> 
       <nav>
         <ul>

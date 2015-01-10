@@ -4,8 +4,27 @@ title: 浅谈android中的目录结构
 ---
 
 ***
+之前在android游戏开发中就遇到本地数据存储的问题：一般情形之下就将动态数据写入SD中存储，在没有SD卡的手机上就需另作处理了;再有在开发android应用的过程中，总要去调试APP,安装时又想去了解android的目录结构。然后在网络上搜到了一点材料，整理如下:
 
-在开发android应用的过程中，总要去调试APP,安装时又想去了解android的目录结构。然后搜到了一点材料。
+先行说明下几个专业术语：
+
+内部存储┐==内部存储一般是指用户可以使用的空间位于"/data"
+系统存储├─物理位置是位于手机内部的非易失性存储器上，就是俗称的ROM
+系统缓存┘==系统缓存是存放在"/cache"下的
+
+内存 ———物理位置是位于手机内部的随机存储器上，就是俗称的RAM
+RAM:相当于电脑里面的内存条，掉电不能保存用户数据，运行速度比较快。一般的Ram空间为512M~1G
+
+ROM:相当于一块硬盘=微硬盘能持久的储存一些数据，如手机掉电，之前的用户数据依然会被保存,，一般空间为1G~32G
+
+SD卡：相当于一个外部的U盘，不是一个必须设备
+
+而android系统是基于linux系统建立的，她的分区结构跟windows不同，没有C盘D盘的，系统存储是、系统缓存、内部存储分别都是不同的分区，每个分区的大小是在系统建立的时候就分配好了的，一般人是无法更改的
+
+就相当于系统存储是windows的C盘，系统缓存相当于windows的临时文件夹
+内部存储就相当于windows的其他盘，android系统中，“/”以及“/system”等目录是用于系统存储的，（“/”是系统的根目录）比如“/system/app”是指系统软件的存放目录
+
+- - - - -
 
 Google Android手机的软件为了安全性和稳定性都是默认安装到手机内存里，但是手机内存有限，所以我们会做app2sd操作，来让我们安装的软件放到sd卡上，这个操作是需要rom的支持的。
 
@@ -46,6 +65,143 @@ Android 2.2 可以将手机程序安装在外置的sd卡上，也就是我们平
 可以看到，dalvik-cache和data这两个文件夹的位置，是这两种方式的一个重大区别。其中dalvik-cache是虚拟机预编译缓存，data（不同于/data，这个是/data/data）是存储程序数据的地方，例如游戏的存档记录，软件的配置信息等。这样有什么区别，区别在于假如你重刷了ROM，app2ext的话，所有的程序都可以保留，但是这些程序的配置信息和游戏的存档都会丢失。而data2ext则可以连同配置和存档都保留，但是dalvik-cache也是一个容易积累垃圾的地方，这些垃圾也会一同保留。
 data2ext由于是把整个data分区都放在sd卡上，因此，我们刷ROM需要WIPE的时候，这个data分区的内容就可能不会被wipe，这可以保存用户的个人资料，但是也可能造成系统莫名其妙的故障。
 
-[原文链接:](http://www.cnblogs.com/codeworker/archive/2011/12/30/2307834.html)
+以下是保存用户输入数据到rom,sd,cache等代码:
+```java
+public  class FileService {
+	/**
+	 * save data to phone rom
+	 * @param context  上下文
+	 * @param fileName  保存的文件名
+	 * @param name      用户名
+	 * @param password   密码
+	 * @return
+	 */
+   public static boolean saveToRom(Context context,String fileName,String name,String password){
+	    // File file = new File("/data/data/cn.itcast.login/a.txt");
+	    //相当于存储到/data/dat/packageName/目录下
+		File file = new File(context.getFilesDir(), fileName);
+		// 如果没有指定访问的模式 ,文件的模式 默认是私有的权限.
+		// 只有当前的应用程序可以读写这个文件 ,别的应用程序是不可以操作这个文件.
+	   try {
+		FileOutputStream fos=new FileOutputStream(file);
+		fos.write((name+":"+password).getBytes());
+		fos.close();
+		return true;
+	} catch (Exception e) {
+		e.printStackTrace();
+		return false;
+	}
+   }
+   
+   /**
+	 * 保存数据到手机的rom空间的缓存目录
+	 * 作用 保存应用程序的临时数据, 在手机内存不足的时候 系统会释放掉这块空间
+	 * 用户也可以手工的释放掉这块空间
+	 * @param context 上下文
+	 * @param filename 保存的文件名
+	 * @param name 用户名
+	 * @param password 密码
+	 * @return
+	 */
+   public static boolean saveToRomCache(Context context,String fileName,String name,String password){
+	    File file=new File(context.getCacheDir(),fileName);///data/dat/packageName/
+		   try {
+			FileOutputStream fos=new FileOutputStream(file);
+			fos.write((name+":"+password).getBytes());
+			fos.close();
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+  }
+   
+   /**
+    * sava data to externalStorage【外部存储卡】
+    * @param context
+    * @param fileName
+    * @param name
+    * @param password
+    * @return
+    */
+   public static boolean saveToSD(Context context,String fileName,String name,String password){
+	    //相当于存储到/mnt/sdcard/目录下
+	   //在保存数据到sd卡之前 ,最好判断一下 用户是否有sd卡 sd是否可用.
+	    File file=new File(Environment.getExternalStorageDirectory(),fileName);
+	    try {
+			FileOutputStream fos=new FileOutputStream(file);
+			fos.write((name+":"+password).getBytes());
+			fos.close();
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+   }
+   
+   /**
+    * 将用户输入的数据以xml文件格式保存到手机rom空间
+    * @param context
+    * @param name
+    * @param password
+    * @return
+    */
+   public static boolean saveToXML(Context context,String name,String password){
+	   File file=new File(context.getFilesDir(),"info.xml");
+	   try {
+		FileOutputStream fos=new FileOutputStream(file);
+		XmlSerializer serial=Xml.newSerializer();
+		//初始化一下xml的序列化器
+		serial.setOutput(fos, "UTF-8");
+		serial.startDocument("UTF-8", true);
+		serial.startTag(null, "map");
+		
+		serial.startTag(null, "name");
+		serial.text(name);
+		serial.endTag(null, "name");
+		
+		serial.startTag(null, "password");
+		serial.text(password);
+		serial.endTag(null, "password");
+		
+		serial.endTag(null, "map");
+		serial.endDocument();
+		fos.flush();
+		fos.close();
+		return true;
+	} catch (Exception e) {
+		e.printStackTrace();
+		return false;
+	}
+   }
+   
+   /**
+    * 从rom文件中读取存储的内容
+    * @param context
+    * @param fileName
+    * @return
+    */
+   public static Map<String,String>  readFromRom(Context context,String fileName){
+	   File file=new File(context.getFilesDir(),fileName);
+	   try {
+		FileInputStream fis=new FileInputStream(file);
+		byte[] result=StreamTools.getBytes(fis);
+		String[] data=new String(result).split(":");
+		String name=data[0];
+		String password=data[1];
+		Map<String,String> map=new HashMap<String, String>();
+		map.put("name", name);
+		map.put("password", password);
+		return map;
+	} catch (Exception e) {
+		e.printStackTrace();
+		return null;
+	}
+   }
+ }
+```
+
+[参考原文链接A](http://www.cnblogs.com/codeworker/archive/2011/12/30/2307834.html)
+[参考原文链接B](http://blog.csdn.net/kelingbest/article/details/24004075)
 
 ***

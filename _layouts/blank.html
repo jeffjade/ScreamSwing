@@ -30,7 +30,6 @@
     <header>
       <h2><a href="{{ site.baseurl }}"><center>{{ site.title }}</center></a></h2>
       <p><h4><center>勤學如春起之苗，不見其增，日有所長。</center></h4></p>
-      <embed src="http://www.xiami.com/widget/0_2079912/singlePlayer.swf" type="application/x-shockwave-flash" width="257" height="33" wmode="transparent"></embed>
       <hr color="purple"> 
       <nav>
         <ul>
@@ -49,5 +48,37 @@
     <footer>
       <span>Copyright</span><span><a href="{{ site.url }}">{% if page.author %}{{ page.author }}{% else %}{{site.title}}{% endif %}</a></span><span>{{ site.time | date: "%Y" }}</span>
     </footer>
+    
+      <SCRIPT language="JavaScript">
+      <!--This is For Playing Music
+      var sound1="http://jeffjade.github.io/ScreamSwing/sound/theSkyInMyHeart.mp3"
+      var sound2="http://jeffjade.github.io/ScreamSwing/sound/theLoveOfYourLife.mp3"
+      var sound3="http://jeffjade.github.io/ScreamSwing/sound/Let It Go.mp3"
+      var sound4="http://jeffjade.github.io/ScreamSwing/sound/heal the world.mp3"
+      var sound5="http://jeffjade.github.io/ScreamSwing/sound/My Heart Will Go On.mp3"
+      var sound6="http://jeffjade.github.io/ScreamSwing/sound/Top Of The World.mp3"
+      var sound7="http://jeffjade.github.io/ScreamSwing/sound/DiDaDiDa.mp3"
+      var sound8="http://jeffjade.github.io/ScreamSwing/sound/RealLoveYou.mp3"
+      var sound9="http://jeffjade.github.io/ScreamSwing/sound/FourGrilWish.pm3"
+      var x=Math.round(Math.random()*9)
+
+      if (x==0) x=sound1
+      else if (x==1) x=sound2
+      else if (x==2) x=sound3
+      else if (x==3) x=sound4
+      else if (x==4) x=sound5
+      else if (x==5) x=sound6
+      else if (x==6) x=sound7
+      else if (x==7) x=sound8
+      else if (x==8) x=sound9
+      else x=sound1
+
+      if (navigator.appName=="Microsoft Internet Explorer")
+        document.write('<bgsound src='+'"'+x+'"'+' loop="infinite">')
+      else 
+        document.write('<embed src='+'"'+x+'"'+'hidden="true" border="0" width="0" height="0" autostart="true" loop="true">')
+      //-->
+      </SCRIPT>
+      
   </body>
 </html>

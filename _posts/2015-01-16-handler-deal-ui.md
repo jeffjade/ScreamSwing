@@ -52,6 +52,7 @@ sendMessageAtTime(Message,long)
 用post的方法执行一个Runnable对象，在该对象中随机产生一个10~100之间的随机数，赋值到UI主线程中的TextView中线程，执行5次，每次相隔5秒， 拼接每次的数字， 最后执行结果应该如: 10 22 33 44 61
 
 主要代码如下：
+
 ```java
     int i = 0;
     @Override
@@ -84,8 +85,7 @@ sendMessageAtTime(Message,long)
         }
     };
 ```
-
-<span id = "jump">**Android主线程不能访问网络异常解决办法**</span>:
+<span id = "jump">**Android主线程不能访问网络异常解决办法:**</span>
 从两个方面说下这个问题：
 1. 不让访问网络的原因
 2. 解决该问题的办法

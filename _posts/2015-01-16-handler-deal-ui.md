@@ -53,36 +53,36 @@ sendMessageAtTime(Message,long)
 
 主要代码如下：
 ```java
-int i = 0;
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-    handler.post(run);
-}
-
-Handler handler = new Handler(){
+    int i = 0;
     @Override
-    public void handleMessage(Message msg){
-        String s = String.valueOf(msg.what);
-        TextView tv = (TextView)findViewById(R.id.textView);
-        tv.setText(tv.getText() + ” ” + s);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        handler.post(run);
     }
-};
 
-Runnable run = new Runnable(){
-    @Override
-    public void run(){
-        Random r = new Random();
-        int rnum = r.nextInt((100 – 10) + 1) + 10;
-        handler.sendEmptyMessage(rnum);
-        handler.postDelayed(run, 5000);
-        i++;
-        if (i==5){
-            handler.removeCallbacks(run);
+    Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            String s = String.valueOf(msg.what);
+            TextView tv = (TextView)findViewById(R.id.textView);
+            tv.setText(tv.getText() + ” ” + s);
         }
-    }
-};
+    };
+
+    Runnable run = new Runnable(){
+        @Override
+        public void run(){
+            Random r = new Random();
+            int rnum = r.nextInt((100 – 10) + 1) + 10;
+            handler.sendEmptyMessage(rnum);
+            handler.postDelayed(run, 5000);
+            i++;
+            if (i==5){
+                handler.removeCallbacks(run);
+            }
+        }
+    };
 ```
 
 <span id = "jump">**Android主线程不能访问网络异常解决办法**</span>:
@@ -102,13 +102,13 @@ Runnable run = new Runnable(){
 
 启动一个新线程的代码：
 ```java
-new Thread(){
-    @Override
-    public void run() {
-        Dosomething();
-        handler.sendEmptyMessage(0);
-    }
-}.start();
+    new Thread(){
+        @Override
+        public void run() {
+            Dosomething();
+            handler.sendEmptyMessage(0);
+        }
+    }.start();
 ```
 
 此处我们重写了线程类的run方法，执行Dosomething. 在里面还有个handler对象，这又涉及到了跨线程修改UI元素内容的问题。在java中是不允许跨线程修改UI元素的，如我们在新启动的线程中想去修改UI主线程中TextView的文本时，会报错误的。如果想做这样的操作，我们就得借助Handler这个类来实现。 关于这个handler类的用法，我们单独的再来写一篇博客进行介绍。
@@ -122,8 +122,8 @@ new Thread(){
 
 在我们的Activity类的onCreate方法中，设置如下规则：
 ```java
-StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-StrictMode.setThreadPolicy(policy);
+    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+    StrictMode.setThreadPolicy(policy);
 ```
 
 这样也可以解决这个问题

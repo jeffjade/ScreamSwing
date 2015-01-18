@@ -34,12 +34,13 @@ Handler的主要作用：**主要用于异步消息的处理**
  
 ####接下来我们看看关于Handler都有哪些方法（它都能干什么）：####
 其中Handler对象的一些主要方法，如下：
->post(Runnable) postAtTime(Runnable,long)
-postDelayed(Runnable long)
-sendEmptyMessage(int)
-sendMessage(Message)
-sendMessageAtTime(Message,long)
->sendMessageDelayed(Message,long)
+
+>post(Runnable) postAtTime(Runnable,long)  
+postDelayed(Runnable long)  
+sendEmptyMessage(int)  
+sendMessage(Message)  
+sendMessageAtTime(Message,long)  
+>sendMessageDelayed(Message,long)  
 
 正如方法名字中看到的，有两类方法：
 (1)在某个主线程中执行Runnable
@@ -101,6 +102,7 @@ sendMessageAtTime(Message,long)
 ####1) 独立线程的办法
 
 启动一个新线程的代码：
+
 ```java
     new Thread(){
         @Override
@@ -121,6 +123,7 @@ sendMessageAtTime(Message,long)
 ####3) StrictMode修改默认的策略
 
 在我们的Activity类的onCreate方法中，设置如下规则：
+
 ```java
     StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
     StrictMode.setThreadPolicy(policy);

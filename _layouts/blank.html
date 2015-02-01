@@ -38,10 +38,10 @@
       <hr color="purple"> 
       <nav>
         <ul>
-          <li><a href="http://www.cnblogs.com/jadeboy/"> <font size="+5">Archiv</font> </a></li>
+          <li><a href="http://www.cnblogs.com/jadeboy/"> <font size="+4">Archiv</font> </a></li>
           {% for node in site.pages %}
             {% if node.title %}
-              <li><a href="{{ node.url | prepend: site.baseurl }}"{% if page.url == node.url %} id="selected"{% endif %}> <font size="+5">{{ node.title }}</font> </a>
+              <li><a href="{{ node.url | prepend: site.baseurl }}"{% if page.url == node.url %} id="selected"{% endif %}> <font size="+4">{{ node.title }}</font> </a>
               </li>
             {% endif %}
           {% endfor %}

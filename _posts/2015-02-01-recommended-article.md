@@ -21,3 +21,11 @@ title: 吐血推荐文章集锦
 [MVC，MVP 和 MVVM 的图示](http://www.ruanyifeng.com/blog/2015/02/mvcmvp_mvvm.html)
 
 ------
+
+###Git/Github篇###
+
+------
+很好的图文总结出对Git的理解，值得阅读and收藏!   
+[米扑博客-Git 常用命令图解](http://blog.mimvp.com/2015/02/git-commands-commonly-used-graphic/)
+
+------

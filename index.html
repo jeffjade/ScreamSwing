@@ -8,11 +8,4 @@ title: Home
         <a href="{{site.baseurl}}{{post.url}}"> {{ post.title }}  </a>
         {{ post.date | date: "%F" }} <br>
     {% endfor %}
-
-	{% for post in site.data %}
-		<li>
-			<a href="{{ post.url }}">{{ post.title }}</a>
-			{{ post.date | date: "%F" }} <br>
-		</li>
-	{% endfor %}
 </ul>

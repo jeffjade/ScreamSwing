@@ -48,11 +48,14 @@
         </ul>
       </nav>
     </header>
-{{ content }}
+    {{ content }}
+
     <footer>
       <span>Copyright</span><span><a href="{{ site.url }}">{% if page.author %}{{ page.author }}{% else %}{{site.title}}{% endif %}</a></span><span>{{ site.time | date: "%Y" }}</span>
     </footer>
+
     <script type="text/javascript" src="http://blogparts.giffy.me/0013/parts.js"></script>
+
 
    <div id="disqus_thread"></div> 
    <script type="text/javascript"> 
@@ -80,8 +83,6 @@
         (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
     </script>
-    
-    
 
   </body>
 </html>

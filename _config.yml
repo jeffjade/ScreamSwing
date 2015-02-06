@@ -4,3 +4,31 @@ markdown: redcarpet
 safe: false
 pygments: true
 title: 呐喊彷徨
+
+
+# 侧栏
+## 侧栏项目是否开启
+## author 作者信息
+## categories 文章分类
+## dynamic 热门文章
+## lively 最新动态
+## visitors 最近访客
+sidebar:
+  author: true
+  categories: true
+  dynamic: true
+  lively: true
+  visitors: true
+
+
+# 友情链接
+links:
+  github:
+    icon: fa-github
+    url: https://github.com
+    descript: github
+
+  twitter:
+    icon: fa-twitter
+    url: https://twitter.com/twbootstrap
+    descript: Twitter

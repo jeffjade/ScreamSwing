@@ -1,5 +1,8 @@
 body {
-    font-family: "Source Sans Pro", "Calibri", sans-serif;
+    font-family:Georgia, "Times New Roman", 
+             "Microsoft YaHei", "微软雅黑", 
+             STXihei, "华文细黑", 
+             serif;
     font-weight: 200;
     font-size: calc(.6vmax + .8em);
     line-height: 1.4em;
@@ -9,7 +12,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: "Gentium Basic", serif;
+    font-family: Helvetica,Arial,sans-serif;
     margin: 0;
     text-transform: uppercase;
     letter-spacing: .1em;

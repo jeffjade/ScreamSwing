@@ -29,3 +29,12 @@ title: 吐血推荐文章集锦
 [米扑博客-Git 常用命令图解](http://blog.mimvp.com/2015/02/git-commands-commonly-used-graphic/)
 
 ------
+
+###程序员###
+
+------
+
+[一张图道尽程序员的出路](http://blog.jobbole.com/83264/)
+[薪资，你是我不能言说的伤](http://blog.jobbole.com/83992/)
+
+------
